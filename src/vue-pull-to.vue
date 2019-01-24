@@ -9,7 +9,7 @@
             :state-text="topText"
             :trigger-distance="_topConfig.triggerDistance"
             :diff="diff">
-        <p class="default-text">{{ topText }}</p>
+        <p class="default-text"><span v-if="icon !== null" :class="icon"></span> {{ topText }}</p>
       </slot>
     </div>
     <div class="scroll-container">
@@ -119,6 +119,14 @@
       },
       _bottomConfig: function () {
         return Object.assign({}, BOTTOM_DEFAULT_CONFIG, this.bottomConfig);
+      },
+
+      icon() {
+        const config = this.direction === 'down'
+          ? this.topConfig
+          : this.bottomConfig;
+
+        return config.icons ? config.icons[ this.state ] : null;
       }
     },
     watch: {
@@ -242,7 +250,7 @@
       },
 
       handleTouchEnd() {
-        if (this.diff === 0) return
+        if (this.diff === 0) return;
         if (this.state === 'trigger') {
           this.actionLoading();
           return;

@@ -1,39 +1,54 @@
-<template>
-	<div class="vue-pull-to-wrapper"
-		 :style="{ height: wrapperHeight, transform: `translate3d(0, ${diff}px, 0)` }">
-		<div v-if="topLoadMethod"
-			 :style="{ height: `${topBlockHeight}px`, marginTop: `${-topBlockHeight}px` }"
-			 class="action-block">
-			<slot name="top-block"
-				  :state="state"
-				  :state-text="topText"
-				  :trigger-distance="_topConfig.triggerDistance"
-				  :diff="diff">
-				<p class="default-text"><span v-if="icon !== null" :class="icon"></span> {{ topText }}</p>
-			</slot>
-		</div>
-		<div class="scroll-container">
-			<slot></slot>
-		</div>
-		<div v-if="bottomLoadMethod"
-			 :style="{ height: `${bottomBlockHeight}px`, marginBottom: `${-bottomBlockHeight}px` }"
-			 class="action-block">
-			<slot name="bottom-block"
-				  :state="state"
-				  :state-text="bottomText"
-				  :trigger-distance="_bottomConfig.triggerDistance"
-				  :diff="diff">
-				<p class="default-text">{{ bottomText }}</p>
-			</slot>
-		</div>
-	</div>
-</template>
+// http://www.alloyteam.com/2012/11/javascript-throttle/
 
-<script type="text/babel">
-import { throttle } from './utils';
-import { BOTTOM_DEFAULT_CONFIG, TOP_DEFAULT_CONFIG } from './config';
+function throttle(fn, delay, mustRunDelay) {
+	if ( mustRunDelay === void 0 ) mustRunDelay = 0;
 
-export default {
+	var timer = null;
+	var tStart;
+	return function() {
+		var context = this;
+		var args = arguments;
+		var tCurr = +new Date();
+		clearTimeout(timer);
+		if (!tStart) {
+			tStart = tCurr;
+		}
+		if (mustRunDelay !== 0 && tCurr - tStart >= mustRunDelay) {
+			fn.apply(context, args);
+			tStart = tCurr;
+		} else {
+			timer = setTimeout(function() {
+				fn.apply(context, args);
+			}, delay);
+		}
+	};
+}
+
+var TOP_DEFAULT_CONFIG = {
+	pullText: '下拉刷新',
+	triggerText: '释放更新',
+	loadingText: '加载中...',
+	doneText: '加载完成',
+	failText: '加载失败',
+	loadedStayTime: 400,
+	stayDistance: 50,
+	triggerDistance: 70,
+};
+
+var BOTTOM_DEFAULT_CONFIG = {
+	pullText: '上拉加载',
+	triggerText: '释放更新',
+	loadingText: '加载中...',
+	doneText: '加载完成',
+	failText: '加载失败',
+	loadedStayTime: 400,
+	stayDistance: 50,
+	triggerDistance: 70,
+};
+
+(function(){ if(typeof document !== 'undefined'){ var head=document.head||document.getElementsByTagName('head')[0], style=document.createElement('style'), css=" .vue-pull-to-wrapper[data-v-81faaf1a]{ display:flex; flex-direction:column; height:100%; } .scroll-container[data-v-81faaf1a]{ flex:1; overflow-x:hidden; overflow-y:scroll; -webkit-overflow-scrolling:touch; } .vue-pull-to-wrapper .action-block[data-v-81faaf1a]{ position:relative; width:100%; } .default-text[data-v-81faaf1a]{ height:100%; line-height:50px; text-align:center; } "; style.type='text/css'; if (style.styleSheet){ style.styleSheet.cssText = css; } else { style.appendChild(document.createTextNode(css)); } head.appendChild(style); } })();
+
+var component = {render: function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"vue-pull-to-wrapper",style:({ height: _vm.wrapperHeight, transform: ("translate3d(0, " + (_vm.diff) + "px, 0)") })},[(_vm.topLoadMethod)?_c('div',{staticClass:"action-block",style:({ height: ((_vm.topBlockHeight) + "px"), marginTop: ((-_vm.topBlockHeight) + "px") })},[_vm._t("top-block",[_c('p',{staticClass:"default-text"},[(_vm.icon !== null)?_c('span',{class:_vm.icon}):_vm._e(),_vm._v(" "+_vm._s(_vm.topText))])],{state:_vm.state,stateText:_vm.topText,triggerDistance:_vm._topConfig.triggerDistance,diff:_vm.diff})],2):_vm._e(),_vm._v(" "),_c('div',{staticClass:"scroll-container"},[_vm._t("default")],2),_vm._v(" "),(_vm.bottomLoadMethod)?_c('div',{staticClass:"action-block",style:({ height: ((_vm.bottomBlockHeight) + "px"), marginBottom: ((-_vm.bottomBlockHeight) + "px") })},[_vm._t("bottom-block",[_c('p',{staticClass:"default-text"},[_vm._v(_vm._s(_vm.bottomText))])],{state:_vm.state,stateText:_vm.bottomText,triggerDistance:_vm._bottomConfig.triggerDistance,diff:_vm.diff})],2):_vm._e()])},staticRenderFns: [],_scopeId: 'data-v-81faaf1a',
 	name: 'vue-pull-to',
 	props: {
 		distanceIndex: {
@@ -80,18 +95,18 @@ export default {
 		},
 		topConfig: {
 			type: Object,
-			default: () => {
+			default: function () {
 				return {};
 			},
 		},
 		bottomConfig: {
 			type: Object,
-			default: () => {
+			default: function () {
 				return {};
 			},
 		},
 	},
-	data() {
+	data: function data() {
 		return {
 			scrollEl: null,
 			startScrollTop: 0,
@@ -121,8 +136,8 @@ export default {
 			return Object.assign({}, BOTTOM_DEFAULT_CONFIG, this.bottomConfig);
 		},
 
-		icon() {
-			const config = this.direction === 'down'
+		icon: function icon() {
+			var config = this.direction === 'down'
 				? this.topConfig
 				: this.bottomConfig;
 
@@ -130,7 +145,7 @@ export default {
 		},
 	},
 	watch: {
-		state(val) {
+		state: function state(val) {
 			if (this.direction === 'down') {
 				this.$emit('top-state-change', val);
 			} else {
@@ -139,19 +154,19 @@ export default {
 		},
 	},
 	methods: {
-		actionPull() {
+		actionPull: function actionPull() {
 			this.state = 'pull';
 			this.direction === 'down'
 				? this.topText = this._topConfig.pullText
 				: this.bottomText = this._bottomConfig.pullText;
 		},
-		actionTrigger() {
+		actionTrigger: function actionTrigger() {
 			this.state = 'trigger';
 			this.direction === 'down'
 				? this.topText = this._topConfig.triggerText
 				: this.bottomText = this._bottomConfig.triggerText;
 		},
-		actionLoading() {
+		actionLoading: function actionLoading() {
 			this.state = 'loading';
 			if (this.direction === 'down') {
 				this.topText = this._topConfig.loadingText;
@@ -164,9 +179,12 @@ export default {
 				this.scrollTo(-this._bottomConfig.stayDistance);
 			}
 		},
-		actionLoaded(loadState = 'done') {
-			this.state = `loaded-${loadState}`;
-			let loadedStayTime;
+		actionLoaded: function actionLoaded(loadState) {
+			var this$1 = this;
+			if ( loadState === void 0 ) loadState = 'done';
+
+			this.state = "loaded-" + loadState;
+			var loadedStayTime;
 			if (this.direction === 'down') {
 				this.topText = loadState === 'done'
 					? this._topConfig.doneText
@@ -178,28 +196,31 @@ export default {
 					: this._bottomConfig.failText;
 				loadedStayTime = this._bottomConfig.loadedStayTime;
 			}
-			setTimeout(() => {
-				this.scrollTo(0);
+			setTimeout(function () {
+				this$1.scrollTo(0);
 
 				// reset state
-				setTimeout(() => {
-					this.state = '';
+				setTimeout(function () {
+					this$1.state = '';
 				}, 200);
 			}, loadedStayTime);
 		},
-		scrollTo(y, duration = 200) {
-			this.$el.style.transition = `${duration}ms`;
+		scrollTo: function scrollTo(y, duration) {
+			var this$1 = this;
+			if ( duration === void 0 ) duration = 200;
+
+			this.$el.style.transition = duration + "ms";
 			this.diff = y;
-			setTimeout(() => {
-				this.$el.style.transition = '';
+			setTimeout(function () {
+				this$1.$el.style.transition = '';
 			}, duration);
 		},
 
-		checkBottomReached() {
+		checkBottomReached: function checkBottomReached() {
 			return this.scrollEl.scrollTop + this.scrollEl.offsetHeight + 1 >= this.scrollEl.scrollHeight;
 		},
 
-		handleTouchStart(event) {
+		handleTouchStart: function handleTouchStart(event) {
 			this.startY = event.touches[ 0 ].clientY;
 			this.startX = event.touches[ 0 ].clientX;
 			this.beforeDiff = this.diff;
@@ -207,13 +228,13 @@ export default {
 			this.bottomReached = this.checkBottomReached();
 		},
 
-		handleTouchMove(event) {
+		handleTouchMove: function handleTouchMove(event) {
 			this.currentY = event.touches[ 0 ].clientY;
 			this.currentX = event.touches[ 0 ].clientX;
 			this.pullDistance = (this.currentY - this.startY) / this.distanceIndex + this.beforeDiff;
 			// judge pan gesture direction, if not vertival just return
 			// make sure that if some components embeded can handle horizontal pan gesture in here
-			if (Math.abs(this.currentY - this.startY) < Math.abs(this.currentX - this.startX)) return;
+			if (Math.abs(this.currentY - this.startY) < Math.abs(this.currentX - this.startX)) { return; }
 			this.direction = this.pullDistance > 0 ? 'down' : 'up';
 
 			if (this.startScrollTop === 0 && this.direction === 'down' && this.isTopBounce) {
@@ -222,7 +243,7 @@ export default {
 				this.diff = this.pullDistance;
 				this.isThrottleTopPull ? this.throttleEmitTopPull(this.diff) : this.$emit('top-pull', this.diff);
 
-				if (typeof this.topLoadMethod !== 'function') return;
+				if (typeof this.topLoadMethod !== 'function') { return; }
 
 				if (this.pullDistance < this._topConfig.triggerDistance &&
 					this.state !== 'pull' && this.state !== 'loading') {
@@ -237,7 +258,7 @@ export default {
 				this.diff = this.pullDistance;
 				this.isThrottleBottomPull ? this.throttleEmitBottomPull(this.diff) : this.$emit('bottom-pull', this.diff);
 
-				if (typeof this.bottomLoadMethod !== 'function') return;
+				if (typeof this.bottomLoadMethod !== 'function') { return; }
 
 				if (Math.abs(this.pullDistance) < this._bottomConfig.triggerDistance &&
 					this.state !== 'pull' && this.state !== 'loading') {
@@ -249,8 +270,8 @@ export default {
 			}
 		},
 
-		handleTouchEnd() {
-			if (this.diff === 0) return;
+		handleTouchEnd: function handleTouchEnd() {
+			if (this.diff === 0) { return; }
 			if (this.state === 'trigger') {
 				this.actionLoading();
 				return;
@@ -259,20 +280,25 @@ export default {
 			this.scrollTo(0);
 		},
 
-		handleScroll(event) {
+		handleScroll: function handleScroll(event) {
 			this.isThrottleScroll ? this.throttleEmitScroll(event) : this.$emit('scroll', event);
 			this.throttleOnInfiniteScroll();
 		},
 
-		onInfiniteScroll() {
+		onInfiniteScroll: function onInfiniteScroll() {
 			if (this.checkBottomReached()) {
 				this.$emit('infinite-scroll');
 			}
 		},
 
-		throttleEmit(delay, mustRunDelay = 0, eventName) {
-			const throttleMethod = function() {
-				const args = [ ...arguments ];
+		throttleEmit: function throttleEmit(delay, mustRunDelay, eventName) {
+			if ( mustRunDelay === void 0 ) mustRunDelay = 0;
+
+			var throttleMethod = function() {
+				var i = arguments.length, argsArray = Array(i);
+				while ( i-- ) argsArray[i] = arguments[i];
+
+				var args = [].concat( argsArray );
 				args.unshift(eventName);
 				this.$emit.apply(this, args);
 			};
@@ -280,51 +306,55 @@ export default {
 			return throttle(throttleMethod, delay, mustRunDelay);
 		},
 
-		bindEvents() {
+		bindEvents: function bindEvents() {
 			this.scrollEl.addEventListener('touchstart', this.handleTouchStart);
 			this.scrollEl.addEventListener('touchmove', this.handleTouchMove);
 			this.scrollEl.addEventListener('touchend', this.handleTouchEnd);
 			this.scrollEl.addEventListener('scroll', this.handleScroll);
 		},
 
-		createThrottleMethods() {
+		createThrottleMethods: function createThrottleMethods() {
 			this.throttleEmitTopPull = this.throttleEmit(200, 300, 'top-pull');
 			this.throttleEmitBottomPull = this.throttleEmit(200, 300, 'bottom-pull');
 			this.throttleEmitScroll = this.throttleEmit(100, 150, 'scroll');
 			this.throttleOnInfiniteScroll = throttle(this.onInfiniteScroll, 400);
 		},
 
-		init() {
+		init: function init() {
 			this.createThrottleMethods();
 			this.scrollEl = this.$el.querySelector('.scroll-container');
 			this.bindEvents();
 		},
 	},
-	mounted() {
+	mounted: function mounted() {
 		this.init();
 	},
 };
-</script>
 
-<style scoped>
-	.vue-pull-to-wrapper{
-		display:flex;
-		flex-direction:column;
-		height:100%;
-	}
-	.scroll-container{
-		flex:1;
-		overflow-x:hidden;
-		overflow-y:scroll;
-		-webkit-overflow-scrolling:touch;
-	}
-	.vue-pull-to-wrapper .action-block{
-		position:relative;
-		width:100%;
-	}
-	.default-text{
-		height:100%;
-		line-height:50px;
-		text-align:center;
-	}
-</style>
+// Import vue component
+
+// Declare install function executed by Vue.use()
+function install(Vue) {
+	if (install.installed) { return; }
+	install.installed = true;
+	Vue.component('MyComponent', component);
+}
+
+// Create module definition for Vue.use()
+var plugin = {
+	install: install,
+};
+
+// Auto-install when vue is found (eg. in browser via <script> tag)
+var GlobalVue = null;
+if (typeof window !== 'undefined') {
+	GlobalVue = window.Vue;
+} else if (typeof global !== 'undefined') {
+	GlobalVue = global.Vue;
+}
+if (GlobalVue) {
+	GlobalVue.use(plugin);
+}
+
+export default component;
+export { install };
